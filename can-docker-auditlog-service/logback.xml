@@ -12,7 +12,7 @@
     <region>eu-west-1</region>
     <maxRetries>3</maxRetries>
     <shutdownTimeout>30</shutdownTimeout>
-    <streamName>staging_audit_log</streamName>
+    <streamName>staging_audit_log_kinesis</streamName>
     <encoding>UTF-8</encoding>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>java_timestamp=%d{"yyyy-MM-dd'T'HH:mm:ss,SSS"} environment={{ .Values.environment }} request_id=%X{requestId:-no_request_id} remote_host=%X{remoteHost:-no_remote_host} account_id=%X{accountId:-no_account} project_id=%X{projectId:-no_project} %msg%n</pattern>

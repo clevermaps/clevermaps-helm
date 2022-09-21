@@ -13,7 +13,7 @@ service:
   health_port: 9071
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-auditlog-service
-  tag: 1.0.0.43
+  tag: 1.0.0.44
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -92,13 +92,16 @@ applicationProperties:
   ######################################
   ### Spring cloud stream properties ###
   ######################################
+  # TODO: This property was moved here from the structure bellow and made flat in order to verify if structured properties format causes problems when deployed. Clean it up!
+  spring.cloud.stream.bindings.consumeAuditLogKinesisPersistToAuditLogDynamoDb-in-0.destination: staging_audit_log
   spring.cloud:
     function:
       definition: consumeAuditLogKinesisPersistToAuditLogDynamoDb;consumeAuditLogDynamoDbPersistToJobsHistoryDynamoDb;consumeAuditLogDynamoDbPersistProjectSizeMetricsToUsageAndLastUsageDynamoDb;consumeAuditLogDynamoDbComputeExecutionMetricsToUsageDynamoDb
     stream:
       bindings:
         consumeAuditLogKinesisPersistToAuditLogDynamoDb-in-0:
-          destination: staging_audit_log_kinesis
+          # TODO: This is the original placement of the property that was moved up and made flat. Clean it up!
+  #        destination: staging_audit_log
           group: persist_to_audit_log_dynamodb
           consumer:
             useNativeDecoding: true
