@@ -3,10 +3,19 @@ entries:
   can-docker-auditlog-service:
   - apiVersion: v2
     appVersion: 1.0.0.45
-    created: "2022-09-22T13:08:35.982541+02:00"
+    created: "2022-10-06T14:36:27.512954+02:00"
     digest: 87825eb831baf230f1ce559ecadbfd536616c86d11ca65ed0cc0c4da08ec1d23
     name: can-docker-auditlog-service
     urls:
     - https://clevermaps.github.io/clevermaps-helm/can-docker-auditlog-service.tgz
     version: 0.0.1
-generated: "2022-09-22T13:08:35.980581+02:00"
+  can-docker-authn-service:
+  - apiVersion: v2
+    appVersion: 1.0.0.482
+    created: "2022-10-06T14:36:27.513588+02:00"
+    digest: ce342c0a5fc24f8526b23bd2906275634ed2aec75fcaf391b3cf09bfcef71188
+    name: can-docker-authn-service
+    urls:
+    - https://clevermaps.github.io/clevermaps-helm/can-docker-authn-service.tgz
+    version: 0.0.1
+generated: "2022-10-06T14:36:27.511074+02:00"
