@@ -187,8 +187,8 @@ applicationProperties:
   ### configure AWS SES for invitation email ###
   spring.mail.host: email-smtp.eu-west-1.amazonaws.com
   spring.mail.port: 465
-  spring.mail.username: AKIAIXKCL5PJC3RUWDLA
-  spring.mail.password: MISSING
+  spring.mail.username: '{{ .Values.nameOverride }}'
+  spring.mail.password: '{{ .Values.nameOverride }}'
   ### Other properties ###
   spring.mail.properties.mail.transport.protocol: smtps
   spring.mail.properties.mail.smtp.auth: true
