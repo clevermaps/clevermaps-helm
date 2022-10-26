@@ -3,7 +3,7 @@ entries:
   can-docker-auditlog-service:
   - apiVersion: v2
     appVersion: 1.0.0.45
-    created: "2022-10-25T21:32:56.249561+02:00"
+    created: "2022-10-26T13:21:05.464199+02:00"
     digest: 87825eb831baf230f1ce559ecadbfd536616c86d11ca65ed0cc0c4da08ec1d23
     name: can-docker-auditlog-service
     urls:
@@ -12,16 +12,25 @@ entries:
   can-docker-authn-service:
   - apiVersion: v2
     appVersion: 1.0.0.482
-    created: "2022-10-25T21:32:56.250447+02:00"
+    created: "2022-10-26T13:21:05.465014+02:00"
     digest: ce342c0a5fc24f8526b23bd2906275634ed2aec75fcaf391b3cf09bfcef71188
     name: can-docker-authn-service
     urls:
     - https://clevermaps.github.io/clevermaps-helm/can-docker-authn-service.tgz
     version: 0.0.1
+  can-docker-job-service:
+  - apiVersion: v2
+    appVersion: 1.0.0.528
+    created: "2022-10-26T13:21:05.465574+02:00"
+    digest: 170558a09b7c0c8dd3a325c1b655fe109c6bebe8726cda5a458f3681fdcf6e6f
+    name: can-docker-job-service
+    urls:
+    - https://clevermaps.github.io/clevermaps-helm/can-docker-job-service.tgz
+    version: 0.0.1
   can-docker-md-management-service:
   - apiVersion: v2
     appVersion: 1.0.0.814
-    created: "2022-10-25T21:32:56.250935+02:00"
+    created: "2022-10-26T13:21:05.466227+02:00"
     digest: 1eabfd9f054ec7abb0024a0537f502a54feb0bdf0e06d0a191f6837319b8e692
     name: can-docker-md-management-service
     urls:
@@ -30,7 +39,7 @@ entries:
   can-docker-md-service:
   - apiVersion: v2
     appVersion: 1.0.0.940
-    created: "2022-10-25T21:32:56.252257+02:00"
+    created: "2022-10-26T13:21:05.466963+02:00"
     digest: 79de21dd9f36a01335d578e275e06b1da3fbc8c94115a60e2cbc272d5c5359e2
     name: can-docker-md-service
     urls:
@@ -39,10 +48,10 @@ entries:
   can-docker-project-service:
   - apiVersion: v2
     appVersion: 1.0.0.554
-    created: "2022-10-25T21:32:56.25323+02:00"
+    created: "2022-10-26T13:21:05.46792+02:00"
     digest: 7dc35ac1906526c750237257ec34b8251e950b522d7c36f582a1eb0c341c98b7
     name: can-docker-project-service
     urls:
     - https://clevermaps.github.io/clevermaps-helm/can-docker-project-service.tgz
     version: 0.0.1
-generated: "2022-10-25T21:32:56.247327+02:00"
+generated: "2022-10-26T13:21:05.462704+02:00"
