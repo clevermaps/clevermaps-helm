@@ -1,0 +1,193 @@
+nameOverride: can-docker-dwh-query-service
+fullnameOverride: ""
+namespace:
+  name: can-docker-dwh-query-service
+environment: staging
+replicaCount: 0
+timeToFinishWork: 3600
+iam:
+  role: arn:aws:iam::543777179833:role/eks-staging-can-{{ .Values.nameOverride }}-staging
+service:
+  type: ClusterIP
+  health_port: 9101
+image:
+  repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-dwh-query-service
+  tag: 1.0.0.999
+  pullPolicy: Always
+deployment:
+  reloader: "true"
+env:
+  secrets:
+    - name: SPRING_DATASOURCE_PASSWORD
+      refname: '{{ .Release.Name }}'
+      refkey: spring_datasource_password
+    - name: CAN_SERVICE_DWH_REDIS_PASSWORD
+      refname: '{{ .Release.Name }}'
+      refkey: redis_password
+  variables:
+    - name: JAVA_OPTS
+      value: -Xmx256m -Xms64m -XX:MaxMetaspaceSize=120m
+volumeMounts:
+  - mountPath: /etc/can/application.yml
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.yml
+  - mountPath: /etc/can/application.properties
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.properties
+  - mountPath: /etc/can/logback.xml
+    name: '{{ .Values.nameOverride }}'
+    subPath: logback.xml
+resources:
+  limits:
+    cpu: 250m
+    memory: 512Mi
+  requests:
+    cpu: 10m
+    memory: 256Mi
+nodeSelector: {}
+tolerations: []
+affinity: {}
+ingress:
+  enabled: false
+applicationProperties:
+  #######################################
+  ### Application specific properties ###
+  #######################################
+  service.name: DwhQueryService
+  can.mvc.maxPageSize: 20000
+  ### multi-tenant datasource properties ###
+  # connections are handled by DbPoolService that support DB multitenancy
+  can.db.datasource.urlPrefix: jdbc:postgresql://127.0.0.1:5432/
+  can.db.datasource.urlPostfix: _dwh
+  can.db.datasource.urlParams: loglevel=2
+  can.db.pool.hikari.leakDetectionThreshold: 5000
+  can.db.pool.hikari.minimumIdle: 2
+  can.db.pool.hikari.idleTimeout: 20000
+  can.db.pool.hikari.maximumPoolSize: 5
+  ### Async AWS Step Functions ###
+  can.service.dwh.states.validateActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_validate
+  can.service.dwh.states.removeRedisCacheActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_remove_redis_cache
+  can.service.states.worker.maxWorkerPoolSize: 2
+  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
+  #can.service.states.worker.accessKey: AWS_KEY
+  #can.service.states.worker.secretKey: AWS_SECRET_KEY
+
+  ### AWS SQS ###
+  can.service.dwh.sqs.region: eu-west-1
+  can.service.dwh.sqs.queryQueue: queries-staging-st8kwe.fifo
+  can.service.dwh.sqs.maxWorkerPoolSize: 10
+  # NOTE: following properties are relevant only when NOT running in profile aws-sqs-iam-role-grant (does not apply for staging/production deployment)
+  #can.service.dwh.sqs.accessKey: AKIAX5G5FJC4Q6WD5MRN
+  #can.service.dwh.sqs.secretKey: SECRET
+
+  ### AWS S3 ###
+  can.service.dwh.query.bucket: can-dwh-sqs-offload-staging
+  can.service.dwh.query.bucket.region: eu-west-1
+  # NOTE: following properties are relevant only when NOT running in profile aws-s3-iam-role-grant (does not apply for staging/production deployment)
+  #can.service.dwh.query.s3.accessKey: AKIAX5G5FJC4Q6WD5MRN
+  #can.service.dwh.query.s3.secretKey: SECRET
+
+  ### Redis ###
+  can.service.dwh.redis.hostname: localhost
+  can.service.dwh.redis.port: 6379
+  can.service.dwh.redis.password:
+  can.service.dwh.redis.pool.minIdle: 10
+  can.service.dwh.redis.pool.maxTotal: 50
+  can.service.dwh.redis.pool.maxWaitMillis: 5000
+  can.service.dwh.redis.pool.testWhileIdle: true
+  can.service.dwh.redis.connectTimeoutSeconds: 5
+  can.service.dwh.redis.readTimeoutSeconds: 5
+  can.db.pool.fallbackDatabaseName: test
+  # when editing, do not forget to change the dialect in JUnit test manually
+  can.service.dwh.sqldialect: POSTGRES_9_5
+  # fetch size for getting rows by JDBC Template
+  can.service.dwh.dataFetchSize: 1000
+  # hard limit for number of records for hash cache
+  # DWH queries exceeding this limit will fail to prevent REDIS overloading
+  can.service.dwh.hashCacheRecordsLimit: 100000
+  # correct DWH cluster id is assigned during deployment
+  can.service.dwh.dwhClusterId: ttestt
+  ### other microservices ###
+  #can.service.project.serverUrl: http://localhost:9060
+  #can.service.md.serverUrl: http://localhost:9130
+  can.service.project.serverUrl: https://staging.clevermaps.io:443
+  can.service.md.serverUrl: https://staging.clevermaps.io:443
+  ##############################
+  ### Spring core properties ###
+  ##############################
+
+  # NOTE: AWS DynamoDB Activities are polled only with profiles:
+  # "aws-dynamodb"
+  # if set "aws-dynamodb-credentials" profile,
+  # the properties can.service.dwh.cache.dynamodb.accessKey and secretKey
+  # are used for setting credential
+  # if set "aws-dynamodb-iam-role-grant" the IAM role is used instead
+  #spring.profiles.active: dev
+  # if set "aws-sqs-iam-role-grant" profile, the properties can.service.dwh.sqs.accessKey and secretKey
+  # are loaded from the IAM role
+  spring.profiles.active:
+  ### logging level configuration ###
+  #logging.level.com.cleveranalytics: DEBUG
+  #logging.level.org: INFO
+  #logging.level.com: TRACE
+
+  ### Logback configuration file path ###
+  #logging.config: "./logback.xml"
+
+  ### from application-common.yml ###
+  spring.lifecycle.timeout-per-shutdown-phase: 60s
+  ###########################
+  ### Actuator properties ###
+  ###########################
+  management.server.port: 9101
+  management.endpoint.health.group.readiness.include: db,jms,redis
+  ### from application-common.yml ###
+  management.server.add-application-context-header: false
+  management.endpoint.metrics.enabled: true
+  management.endpoint.prometheus.enabled: true
+  management.endpoints.web.exposure.include: health,info,metrics,prometheus
+  management.metrics.export.prometheus.enabled: true
+  management.endpoint.health.show-details: always
+  management.endpoint.health.probes.enabled: true
+  management.endpoint.health.group.liveness.include: diskSpace,livenessState,logbackAppenderHealthCheck,ping,readinessState,validateWorkerHealthCheck,removeRedisCacheWorkerHealthCheck
+  ################################
+  ### Spring server properties ###
+  ################################
+
+  # do not start standard HTTP tomcat port
+  server.port: -1
+  ### from application-common.yml ###
+  server.shutdown: graceful
+  server.servlet.encoding.charset: UTF-8
+  server.servlet.encoding.enabled: true
+  server.servlet.encoding.force: true
+  server.compression.enabled: true
+  server.compression.mime-types: application/json,application/xml,text/html,text/xml,text/plain,text/csv
+  server.error.include-message: always
+  spring.hateoas.use-hal-as-default-json-media-type: false
+  # Force English on Spring Bean Validation error messages.
+  spring.web.locale: en_EN
+  spring.web.locale-resolver: fixed
+  # By default, requests that don't match any controller are redirected to DefaultErrorController (/error) where
+  # response is built with correct value of 404 as "status" but with "/error" as a "path" and
+  # "No message available" as a "message". This configures DispatcherServlet to throw NoHandlerFoundException
+  # when no controller matches the request which. The exception is subsequently handled by common global
+  # exception handling mechanism.
+  spring.mvc.throw-exception-if-no-handler-found: true
+  # disable adding default resource handler mapping - it would break error responses when making request to nonexistent
+  # endpoint
+  spring.web.resources.add-mappings: false
+  # configure Spring to automaticaly resolve x-fowarded headers
+  server.forward-headers-strategy: framework
+  ##################################
+  ### Spring security properties ###
+  ##################################
+  spring.security.oauth2.resourceserver.jwt.issuer-uri: https://login.staging.clevermaps.io/oauth2/ausczk34l1H71WKiU0h7
+  ##############################
+  ### Spring data properties ###
+  ##############################
+  spring.datasource.driverClassName: org.postgresql.Driver
+  spring.datasource.username: dwh
+  spring.datasource.password: testtest
+logbackXml: |
+  {{- tpl (.Files.Get "logback.xml") . }}
