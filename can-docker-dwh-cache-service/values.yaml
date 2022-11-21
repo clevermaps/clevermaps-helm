@@ -1,0 +1,185 @@
+nameOverride: can-docker-dwh-cache-service
+fullnameOverride: ""
+namespace:
+  name: can-docker-dwh-cache-service
+environment: staging
+replicaCount: 0
+timeToFinishWork: 3600
+iam:
+  role: arn:aws:iam::543777179833:role/eks-staging-can-{{ .Values.nameOverride }}-staging
+service:
+  type: ClusterIP
+  health_port: 9181
+image:
+  repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-dwh-cache-service
+  tag: 1.0.0.412
+  pullPolicy: Always
+deployment:
+  reloader: "true"
+env:
+  secrets:
+    - name: SPRING_DATASOURCE_PASSWORD
+      refname: '{{ .Release.Name }}'
+      refkey: spring_datasource_password
+  variables:
+    - name: JAVA_OPTS
+      value: -Xmx120m -Xms64m -XX:MaxMetaspaceSize=120m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+UseParallelGC
+volumeMounts:
+  - mountPath: /etc/can/application.yml
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.yml
+  - mountPath: /etc/can/application.properties
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.properties
+  - mountPath: /etc/can/logback.xml
+    name: '{{ .Values.nameOverride }}'
+    subPath: logback.xml
+resources:
+  limits:
+    cpu: 500m
+    memory: 420Gi
+  requests:
+    cpu: 10m
+    memory: 320Mi
+nodeSelector: {}
+tolerations: []
+affinity: {}
+ingress:
+  enabled: false
+applicationProperties:
+  #######################################
+  ### Application specific properties ###
+  #######################################
+  service.name: DwhCacheService
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    dwh.cache.aws:
+      stepFunctions:
+        actions:
+          dropViewsActivity: staging_dwh_cache_drop_views_ttestt
+      dynamodb:
+        # cacheTable and cacheTable.stream properties are used for building DynamoDB table stream ARN in format:
+        # arn:aws:dynamodb:eu-west-1:543777179833:table/prod_audit_log/stream/2018-09-19T14:13:44.259
+        cacheTable: staging-dwh-cache-service-ttestt
+        cacheTable.stream: 2019-05-30T12:40:17.500
+        cacheTable.projectIdIndex: projectId-index
+        leaseTable: dwh-cache-leasekey-staging-ttestt
+        # name of worker-id. Must be unique for each running process and tableStreamArn pair
+        workerId: default-worker-id
+  ### multi-tenant datasource properties ###
+  can.db.datasource.urlPrefix: jdbc:postgresql://127.0.0.1:5432/
+  can.db.datasource.urlPostfix: _dwh
+  can.db.datasource.urlParams: loglevel=2
+  can.db.pool.hikari.leakDetectionThreshold: 15000
+  can.db.pool.hikari.minimumIdle: 1
+  can.db.pool.hikari.idleTimeout: 20000
+  can.db.pool.hikari.maximumPoolSize: 4
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
+  ### Async AWS Step Functions ###
+  can.service.dwh.cache.states.dropViewsActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_cache_drop_views
+  can.service.states.worker.maxWorkerPoolSize: 2
+  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
+  #can.service.states.worker.accessKey: AKIAJQGZF6LATE733ZVA
+  #can.service.states.worker.secretKey: SECRETKEY
+
+  ### DynamoDB Stream configuration (active only with profile: aws-dynamodb) ###
+  can.service.dwh.cache.dynamodb.region: eu-west-1
+  can.service.dwh.cache.dynamodb.table: staging-dwh-cache-service
+  can.service.dwh.cache.dynamodb.tableStreamArn: arn:aws:dynamodb:eu-west-1:543777179833:table/dwh-cache-staging/stream/2019-05-30T12:40:17.500
+  can.service.dwh.cache.dynamodb.leaseTable: dwh-cache-leasekey-staging
+  # name of worker-id. Must be unique for each running process and tableStreamArn pair
+  can.service.dwh.cache.dynamodb.workerId: default-worker-id
+  # NOTE: following properties are relevant only when running in profile aws-dynamodb-credentials (does not apply for staging/production deployment)
+  #can.service.dwh.cache.dynamodb.accessKey: AKIAX5G5FJC4Q6WD5MRN
+  #can.service.dwh.cache.dynamodb.secretKey: SECRETKEY
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
+
+  # set maximal execution time of DWH cache SQL statement to 15 minutes
+  can.service.dwh.cache.stmtTimeout: 900000
+  # when editing, do not forget to change the dialect in JUnit test manually
+  can.service.dwh.sqldialect: POSTGRES_9_5
+  can.db.pool.fallbackDatabaseName: test
+  ### other microservices ###
+  can.service.project.serverUrl: http://localhost:9060
+  ##############################
+  ### Spring core properties ###
+  ##############################
+  spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions, aws-dynamodb
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions, aws-dynamodb
+
+  ### from application-common.yml ###
+  spring.lifecycle.timeout-per-shutdown-phase: 60s
+  ###########################
+  ### Actuator properties ###
+  ###########################
+  management.server.port: 9181
+  management.endpoint.health.group.readiness.include: db,dynamoDb
+  ### from application-common.yml ###
+  management.server.add-application-context-header: false
+  management.endpoint.metrics.enabled: true
+  management.endpoint.prometheus.enabled: true
+  management.endpoints.web.exposure.include: health,info,metrics,prometheus
+  management.metrics.export.prometheus.enabled: true
+  management.endpoint.health.show-details: always
+  management.endpoint.health.probes.enabled: true
+  management.endpoint.health.group.liveness.include: diskSpace,livenessState,logbackAppenderHealthCheck,ping,readinessState,dropViewsWorkerHealthCheck
+  ################################
+  ### Spring server properties ###
+  ################################
+
+  # do not start standard HTTP tomcat port
+  server.port: -1
+  ### from application-common.yml ###
+  server.shutdown: graceful
+  server.servlet.encoding.charset: UTF-8
+  server.servlet.encoding.enabled: true
+  server.servlet.encoding.force: true
+  server.compression.enabled: true
+  server.compression.mime-types: application/json,application/xml,text/html,text/xml,text/plain,text/csv
+  server.error.include-message: always
+  spring.hateoas.use-hal-as-default-json-media-type: false
+  # Force English on Spring Bean Validation error messages.
+  spring.web.locale: en_EN
+  spring.web.locale-resolver: fixed
+  # By default, requests that don't match any controller are redirected to DefaultErrorController (/error) where
+  # response is built with correct value of 404 as "status" but with "/error" as a "path" and
+  # "No message available" as a "message". This configures DispatcherServlet to throw NoHandlerFoundException
+  # when no controller matches the request which. The exception is subsequently handled by common global
+  # exception handling mechanism.
+  spring.mvc.throw-exception-if-no-handler-found: true
+  # disable adding default resource handler mapping - it would break error responses when making request to nonexistent
+  # endpoint
+  spring.web.resources.add-mappings: false
+  # configure Spring to automaticaly resolve x-fowarded headers
+  server.forward-headers-strategy: framework
+  ##################################
+  ### Spring security properties ###
+  ##################################
+  spring.security.oauth2.resourceserver.jwt.issuer-uri: https://login.staging.clevermaps.io/oauth2/ausczk34l1H71WKiU0h7
+  ##############################
+  ### Spring data properties ###
+  ##############################
+
+  # Spring datasource properties
+  # special datasources using standard Postgres JDBC driver
+  # it supports CopyManager used for data loads
+  spring.datasource.driverClassName: org.postgresql.Driver
+  spring.datasource.username: dwh
+  spring.datasource.password: TESTTEST
+  spring.datasource.max-active: 2
+  ########################################
+  ### Spring data migration properties ###
+  ########################################
+
+  # liquibase is used only for db-tests
+  spring.liquibase.enabled: false
+logbackXml: |
+  {{- tpl (.Files.Get "logback.xml") . }}
+priorityClassName: can-services-p3-100000

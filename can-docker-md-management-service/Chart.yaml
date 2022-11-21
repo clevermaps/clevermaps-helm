@@ -1,4 +1,4 @@
 apiVersion: v2
-appVersion: 1.0.0.814
+appVersion: 1.0.0.820
 name: can-docker-md-management-service
 version: 0.0.1

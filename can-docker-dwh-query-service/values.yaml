@@ -12,7 +12,7 @@ service:
   health_port: 9101
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-dwh-query-service
-  tag: 1.0.0.999
+  tag: 1.0.0.1004
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -55,6 +55,24 @@ applicationProperties:
   #######################################
   service.name: DwhQueryService
   can.mvc.maxPageSize: 20000
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    dwh.query.aws:
+      stepFunctions:
+        actions:
+          validateActivity: staging_dwh_validate_ttestt
+          removeRedisCacheActivity: staging_dwh_remove_redis_cache_ttestt
+      sqs:
+        queryQueue: queries-staging-ttestt.fifo
+        maxWorkerPoolSize: 10
+      s3:
+        offloadBucket: can-dwh-sqs-offload-staging
   ### multi-tenant datasource properties ###
   # connections are handled by DbPoolService that support DB multitenancy
   can.db.datasource.urlPrefix: jdbc:postgresql://127.0.0.1:5432/
@@ -64,6 +82,7 @@ applicationProperties:
   can.db.pool.hikari.minimumIdle: 2
   can.db.pool.hikari.idleTimeout: 20000
   can.db.pool.hikari.maximumPoolSize: 5
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
   ### Async AWS Step Functions ###
   can.service.dwh.states.validateActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_validate
   can.service.dwh.states.removeRedisCacheActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_remove_redis_cache
@@ -86,6 +105,7 @@ applicationProperties:
   # NOTE: following properties are relevant only when NOT running in profile aws-s3-iam-role-grant (does not apply for staging/production deployment)
   #can.service.dwh.query.s3.accessKey: AKIAX5G5FJC4Q6WD5MRN
   #can.service.dwh.query.s3.secretKey: SECRET
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
 
   ### Redis ###
   can.service.dwh.redis.hostname: localhost
@@ -108,31 +128,14 @@ applicationProperties:
   # correct DWH cluster id is assigned during deployment
   can.service.dwh.dwhClusterId: ttestt
   ### other microservices ###
-  #can.service.project.serverUrl: http://localhost:9060
-  #can.service.md.serverUrl: http://localhost:9130
   can.service.project.serverUrl: https://staging.clevermaps.io:443
   can.service.md.serverUrl: https://staging.clevermaps.io:443
   ##############################
   ### Spring core properties ###
   ##############################
-
-  # NOTE: AWS DynamoDB Activities are polled only with profiles:
-  # "aws-dynamodb"
-  # if set "aws-dynamodb-credentials" profile,
-  # the properties can.service.dwh.cache.dynamodb.accessKey and secretKey
-  # are used for setting credential
-  # if set "aws-dynamodb-iam-role-grant" the IAM role is used instead
-  #spring.profiles.active: dev
-  # if set "aws-sqs-iam-role-grant" profile, the properties can.service.dwh.sqs.accessKey and secretKey
-  # are loaded from the IAM role
-  spring.profiles.active:
-  ### logging level configuration ###
-  #logging.level.com.cleveranalytics: DEBUG
-  #logging.level.org: INFO
-  #logging.level.com: TRACE
-
-  ### Logback configuration file path ###
-  #logging.config: "./logback.xml"
+  spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions
 
   ### from application-common.yml ###
   spring.lifecycle.timeout-per-shutdown-phase: 60s

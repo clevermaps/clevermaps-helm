@@ -13,7 +13,7 @@ service:
   health_port: 9161
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-job-service
-  tag: 1.0.0.528
+  tag: 1.0.0.532
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -56,6 +56,40 @@ applicationProperties:
   ### Application specific properties ###
   #######################################
   service.name: can-job-service
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+      dynamodb:
+        # timeout in milliseconds for a single http request to complete
+        apiCallAttemptTimeout: 5000
+        # timeout in milliseconds for DynamoDbClient to complete the execution of an API call - a single API call that reads
+        # at most 1MB of data from DynamoDb (before applying filter condition) - may be multiple http requests (e.g. retries
+        # when apiCallAttemptTimeout for a single http request is exceeded)
+        apiCallTimeout: 10000
+        # limit in milliseconds for audit log service to complete querying data from DynamoDb - all API calls including
+        # subsequent API calls using lastEvaluatedKey from previous responses when 1MB data limit was hit
+        queryTimeLimit: 30000
+        # when caching table descriptions is turned on information about table key schema and indices needed for extracting
+        # last evaluated key is fetched only once per table name
+        cacheTableDescriptions: true
+    job.aws:
+      stepFunctions:
+        machines:
+          dataPullMachine: datasets_pull_2
+          dataDumpMachine: datasets_dump
+          exportMachine: export_v2
+          validateMachine: validate_v2
+          truncateMachine: truncate
+          importProjectMachine: import_project
+      dynamodb:
+        environment: staging
+        jobsHistoryTable: prod_jobs_history
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
   ### Async AWS Step Functions ###
   can.service.job.type.dataPull.machineName: datasets_pull_2
   can.service.job.type.dataDump.machineName: datasets_dump
@@ -95,30 +129,15 @@ applicationProperties:
   ### DynamoDB job-service specific configuration
   can.service.job.dynamodb.table: prod_jobs_history
   can.service.job.dynamodb.environment: staging
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### other microservices ###
   can.service.project.serverUrl: http://localhost:9060
-  #can.service.project.serverUrl: https://staging.clevermaps.io:443
-
   ##############################
   ### Spring core properties ###
   ##############################
-
-  # NOTE: AWS DynamoDB Activities are polled only with profile:
-  # aws-dynamodb
-  # if set "aws-dynamodb-credentials" profile,
-  # the properties can.service.dwh.cache.dynamodb.accessKey and secretKey
-  # are used for setting credential
-  # if set "aws-dynamodb-iam-role-grant" the IAM role is used instead
-  # Step function is active only with profiles:
-  # aws-step-functions, aws-step-functions-credentials or aws-step-functions-iam-role-grant
-  spring.profiles.active: aws-step-functions-credentials,aws-dynamodb,aws-dynamodb-credentials
-  ### logging level configuration ###
-  #logging.level.com.cleveranalytics: DEBUG
-  #logging.level.org: INFO
-  #logging.level.com: TRACE
-
-  ### Logback configuration file path ###
-  #logging.config: "./logback.xml"
+  spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-machines, aws-dynamodb
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-machines, aws-dynamodb
 
   ### from application-common.yml ###
   spring.lifecycle.timeout-per-shutdown-phase: 60s

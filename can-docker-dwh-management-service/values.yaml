@@ -12,7 +12,7 @@ service:
   health_port: 9171
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-dwh-management-service
-  tag: 1.0.0.543
+  tag: 1.0.0.548
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -51,35 +51,40 @@ applicationProperties:
   ### Application specific properties ###
   #######################################
   service.name: DwhManagementService
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    dwh.management.aws:
+      stepFunctions:
+        actions:
+          createDbActivity: staging_dwh_create_db_ttestt
+          updateDbActivity: staging_dwh_update_db_ttestt
+          dropDbActivity: staging_dwh_drop_db_ttestt
   ### data migration properties ###
   can.db.datasource.changeLog: db/changelog/db-changelog-master.xml
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
   ### Async AWS Step Functions ###
   can.service.dwh.states.createDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_create_db
   can.service.dwh.states.updateDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_update_db
   can.service.dwh.states.dropDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_dwh_drop_db
   can.service.states.worker.maxWorkerPoolSize: 2
-  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
-  #can.service.shell.states.worker.accessKey: AWS_KEY
-  #can.service.shell.states.worker.secretKey: AWS_SECRET_KEY
-
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### other microservices ###
   can.service.project.serverUrl: http://localhost:9060
   ##############################
   ### Spring core properties ###
   ##############################
-  spring.lifecycle.timeout-per-shutdown-phase: 60s
-  # NOTE: AWS Step Functions Activities are polled only with profiles:
-  # "staging" or "production"
   spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions
+  spring.lifecycle.timeout-per-shutdown-phase: 60s
   ### logging level configuration ###
   logging.level.liquibase: WARN
-  #logging.level.com.cleveranalytics: DEBUG
-  #logging.level.org: INFO
-  #logging.level.com: TRACE
-
-  ### Logback configuration file path ###
-  #logging.config: "./logback.xml"
-
   ###########################
   ### Actuator properties ###
   ###########################

@@ -1,4 +1,4 @@
 apiVersion: v2
-appVersion: 1.0.0.554
+appVersion: 1.0.0.563
 name: can-docker-project-service
 version: 0.0.1

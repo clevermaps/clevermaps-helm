@@ -1,0 +1,4 @@
+apiVersion: v2
+appVersion: 1.0.0.398
+name: can-docker-geosearch-service
+version: 0.0.1

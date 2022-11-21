@@ -13,7 +13,7 @@ service:
   health_port: 9061
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-project-service
-  tag: 1.0.0.554
+  tag: 1.0.0.563
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -73,42 +73,49 @@ applicationProperties:
   ### Application specific properties ###
   #######################################
   service.name: ProjectService
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    project.aws:
+      stepFunctions:
+        machines:
+          prepareProjectMachine: staging_prepare_project
+          deleteProjectMachine: staging_delete_project
+          updateDwhDatabaseMachine: staging_update_dwh_database
+          updateMdDatabaseMachine: staging_update_md_database
+        actions:
+          changeProjectStatusActivity: staging_project_change_project_status
+          updateDbAllProjectsActivity: staging_update_db_all_projects
   can.server.public.fqdn: staging.clevermaps.io
   can.service.project.email.invitation: invitation@clevermaps.io
   can.service.project.dwhClusters: ekwdfi
   can.service.project.defaultOrganizationId: defaultOrgId123
   can.service.project.preparedProjectPoolSize: 10
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
   ### Async AWS Step Functions ###
   can.service.states.machine.prepareProject.name: staging_prepare_project
   can.service.states.machine.deleteProject.name: staging_delete_project
+  can.service.states.machine.updateDwhDatabase.name: staging_update_dwh_database
+  can.service.states.machine.updateMdDatabase.name: staging_update_md_database
   can.service.project.states.changeProjectStatusActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_project_change_project_status
+  can.service.project.states.updateDbAllProjectsActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_update_db_all_projects
   can.service.states.worker.maxWorkerPoolSize: 2
   can.service.aws.region: eu-west-1
   can.service.aws.accountId: "543777179833"
-  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
-  #can.service.states.machine.accessKey: ACCESS_KEY
-  #can.service.states.machine.secretKey: SECRET_KEY
-  #can.service.states.worker.accessKey: AWS_KEY
-  #can.service.states.worker.secretKey: AWS_SECRET_KEY
-
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### other microservices ###
-  #can.service.authn.serverUrl: http://localhost:9010
   can.service.authn.serverUrl: https://staging.clevermaps.io
   ##############################
   ### Spring core properties ###
   ##############################
-
-  # use "aws-step-functions-iam-role-grant" profile to get credentials from role
-  # use "aws-step-functions-credentials" profile to get credentials properties
   spring.profiles.active: dev
-  ### logging level configuration ###
-  #logging.level.com.zaxxer.hikari: debug
-  #logging.level.com.cleveranalytics: DEBUG
-  #logging.level.org: INFO
-  #logging.level.com: TRACE
-
-  ### Logback configuration file path ###
-  #logging.config: "./logback.xml"
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions, aws-step-functions-machines
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions, aws-step-functions-machines
 
   ### from application-common.yml ###
   spring.lifecycle.timeout-per-shutdown-phase: 60s
@@ -175,9 +182,6 @@ applicationProperties:
 
   # default production setting
   spring.jpa.hibernate.ddl-auto: validate
-  # development setting
-  #spring.jpa.hibernate.ddl-auto: update
-
   spring.liquibase.changeLog: classpath:/db/changelog/db-changelog-master.xml
   spring.liquibase.parameters.type.text: TEXT
   ###############################
@@ -187,8 +191,8 @@ applicationProperties:
   ### configure AWS SES for invitation email ###
   spring.mail.host: email-smtp.eu-west-1.amazonaws.com
   spring.mail.port: 465
-  spring.mail.username: '{{ .Values.nameOverride }}'
-  spring.mail.password: '{{ .Values.nameOverride }}'
+  spring.mail.username: AKIAIXKCL5PJC3RUWDLA
+  spring.mail.password: MISSING
   ### Other properties ###
   spring.mail.properties.mail.transport.protocol: smtps
   spring.mail.properties.mail.smtp.auth: true

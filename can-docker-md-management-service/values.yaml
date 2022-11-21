@@ -12,7 +12,7 @@ service:
   health_port: 9031
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-md-management-service
-  tag: 1.0.0.814
+  tag: 1.0.0.820
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -51,46 +51,42 @@ applicationProperties:
   ### Application specific properties ###
   #######################################
   service.name: MdManagementService
-  ### multi-tenant datasource properties ###
-  can.db.datasource.urlPrefix:
-  can.db.datasource.urlPostfix:
-  can.db.datasource.urlParams: loglevel=2
-  can.db.pool.hikari.leakDetectionThreshold: 5000
-  can.db.pool.hikari.minimumIdle: 2
-  can.db.pool.hikari.idleTimeout: 20000
-  can.db.pool.hikari.maximumPoolSize: 5
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    md.management.aws:
+      stepFunctions:
+        actions:
+          createDbActivity: staging_md_create_db
+          updateDbActivity: staging_md_update_db
+          dropDbActivity: staging_md_drop_db
   ### data migration properties ###
   can.db.datasource.changeLog: db/changelog/db-changelog-master.xml
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
   ### Async AWS Step Functions ###
   can.service.md.states.createDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_md_create_db
   can.service.md.states.dropDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_md_drop_db
   can.service.md.states.updateDbActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_md_update_db
   can.service.states.worker.maxWorkerPoolSize: 2
-  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
-  #can.service.states.worker.accessKey: AWS_KEY
-  #can.service.states.worker.secretKey: AWS_SECRET_KEY
-
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### other microservices ###
   can.service.project.serverUrl: http://localhost:9060
   ##############################
   ### Spring core properties ###
   ##############################
-
-  # NOTE: AWS Step Functions Activities are polled only with profiles:
-  # "staging" or "production"
-  spring.profiles.active:
+  spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions
   spring.lifecycle.timeout-per-shutdown-phase: 60s
   # md-service DB tests are in md-management-service package, so override beans defined in *Application classes
   spring.main.allow-bean-definition-overriding: true
   ### logging level configuration ###
   logging.level.liquibase: WARN
-  #logging.level.com.cleveranalytics: DEBUG
-  #logging.level.org: INFO
-  #logging.level.com: TRACE
-
-  ### Logback configuration file path ###
-  #logging.config: "./logback.xml"
-
   ###########################
   ### Actuator properties ###
   ###########################

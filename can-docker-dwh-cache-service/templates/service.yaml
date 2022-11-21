@@ -1,0 +1,25 @@
+{{ if .Values.service.port }}
+apiVersion: v1
+kind: Service
+metadata:
+  # Remember that in clusteraware services, you ned to use ``.Release.Name` and not `service.name` !
+  # https://clevermaps-internal.atlassian.net/wiki/spaces/CAN/pages/179547/One+Service+Account+for+Multiple+Services+-+Problems+Solutions
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: {{ include "service.name" . }}
+    helm.sh/chart: {{ include "service.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    run: {{ include "service.name" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    module: {{ include "service.name" . }}
+{{ end }}

@@ -1,0 +1,157 @@
+nameOverride: can-docker-search-service
+fullnameOverride: ""
+namespace:
+  name: can-docker-search-service
+environment: staging
+replicaCount: 0
+timeToFinishWork: 3600
+iam:
+  role: arn:aws:iam::543777179833:role/eks-staging-can-can-docker-search-service-staging
+service:
+  type: ClusterIP
+  port: 9080
+  health_port: 9081
+image:
+  repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-search-service
+  tag: 1.0.0.888
+  pullPolicy: Always
+deployment:
+  reloader: "true"
+env:
+  variables:
+    - name: JAVA_OPTS
+      value: -Xmx80m -Xms32m -XX:MaxMetaspaceSize=120m
+volumeMounts:
+  - mountPath: /etc/can/application.yml
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.yml
+  - mountPath: /etc/can/application.properties
+    name: '{{ .Values.nameOverride }}'
+    subPath: application.properties
+  - mountPath: /etc/can/logback.xml
+    name: '{{ .Values.nameOverride }}'
+    subPath: logback.xml
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 10m
+    memory: 320Mi
+nodeSelector: {}
+tolerations: []
+affinity: {}
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  paths:
+    - /rest/projects/([a-z0-9]{16})/search(.*)
+  hosts:
+    - staging.cleveranalytics.com
+  tls: []
+applicationProperties:
+  #######################################
+  ### Application specific properties ###
+  #######################################
+  service.name: can-search-service
+  ### AWS ###
+  can.service:
+    aws:
+      accountId: "543777179833"
+      region: eu-west-1
+      stepFunctions:
+        actions.workers:
+          maxWorkerPoolSize: 2
+    search.aws:
+      stepFunctions:
+        actions:
+          createIndexActivity: staging_search_create_index
+          dropIndexActivity: staging_search_drop_index
+          pullActivity: staging_search_pull
+          dropTypeActivity: staging_search_drop_type
+      s3:
+        uploadBucket: can-test-storage
+  can.service.search.elasticsearchUrl: http://localhost:9200
+  can.service.search.elasticsearchHttpTimeout: 300000
+  can.service.search.updateBatchSize: 1000
+  can.service.search.deleteBatchSize: 10000
+  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
+  ### Async AWS Step Functions ###
+  can.service.search.states.createIndexActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_search_create_index
+  can.service.search.states.dropIndexActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_search_drop_index
+  can.service.search.states.pullActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_search_pull
+  can.service.search.states.dropTypeActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_search_drop_type
+  can.service.states.worker.maxWorkerPoolSize: 2
+  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
+  #can.service.states.worker.accessKey: AWS_KEY
+  #can.service.states.worker.secretKey: AWS_SECRET_KEY
+
+  ### AWS S3 ###
+  can.service.dwh.upload.bucket: can-test-storage
+  can.service.dwh.upload.bucket.region: eu-west-1
+  # NOTE: following properties are relevant only when NOT running in profile aws-s3-iam-role-grant (does not apply for staging/production deployment)
+  #can.service.dwh.upload.s3.accessKey: AWS_KEY
+  #can.service.dwh.upload.s3.secretKey: AWS_ACCESSKEY
+  # TODO: remove when CAN-13200 is released and deployed on production (END)
+
+  ### other microservices ###
+  can.service.project.serverUrl: http://localhost:9060
+  can.service.md.serverUrl: http://localhost:9130
+  ##############################
+  ### Spring core properties ###
+  ##############################
+  spring.profiles.active: dev
+  #spring.profiles.active: dev, aws-credentials, aws-step-functions-actions
+  #spring.profiles.active: aws-iam-role-grant, aws-step-functions-actions
+
+  ### from application-common.yml ###
+  spring.lifecycle.timeout-per-shutdown-phase: 60s
+  ###########################
+  ### Actuator properties ###
+  ###########################
+  management.server.port: 9081
+  management.endpoint.health.group.readiness.include: elasticsearch
+  ### from application-common.yml ###
+  management.server.add-application-context-header: false
+  management.endpoint.metrics.enabled: true
+  management.endpoint.prometheus.enabled: true
+  management.endpoints.web.exposure.include: health,info,metrics,prometheus
+  management.metrics.export.prometheus.enabled: true
+  management.endpoint.health.show-details: always
+  management.endpoint.health.probes.enabled: true
+  management.endpoint.health.group.liveness.include: diskSpace,livenessState,logbackAppenderHealthCheck,ping,readinessState,pullWorkerHealthCheck,createIndexWorkerHealthCheck,dropIndexWorkerHealthCheck,dropTypeWorkerHealthCheck
+  ################################
+  ### Spring server properties ###
+  ################################
+  server.port: 9080
+  ### from application-common.yml ###
+  server.shutdown: graceful
+  server.servlet.encoding.charset: UTF-8
+  server.servlet.encoding.enabled: true
+  server.servlet.encoding.force: true
+  server.compression.enabled: true
+  server.compression.mime-types: application/json,application/xml,text/html,text/xml,text/plain,text/csv
+  server.error.include-message: always
+  spring.hateoas.use-hal-as-default-json-media-type: false
+  # Force English on Spring Bean Validation error messages.
+  spring.web.locale: en_EN
+  spring.web.locale-resolver: fixed
+  # By default, requests that don't match any controller are redirected to DefaultErrorController (/error) where
+  # response is built with correct value of 404 as "status" but with "/error" as a "path" and
+  # "No message available" as a "message". This configures DispatcherServlet to throw NoHandlerFoundException
+  # when no controller matches the request which. The exception is subsequently handled by common global
+  # exception handling mechanism.
+  spring.mvc.throw-exception-if-no-handler-found: true
+  # disable adding default resource handler mapping - it would break error responses when making request to nonexistent
+  # endpoint
+  spring.web.resources.add-mappings: false
+  # configure Spring to automaticaly resolve x-fowarded headers
+  server.forward-headers-strategy: framework
+  ##################################
+  ### Spring security properties ###
+  ##################################
+  spring.security.oauth2.resourceserver.jwt.issuer-uri: https://login.staging.clevermaps.io/oauth2/ausczk34l1H71WKiU0h7
+logbackXml: |
+  {{- tpl (.Files.Get "logback.xml") . }}
