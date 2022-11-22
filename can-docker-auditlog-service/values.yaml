@@ -13,7 +13,7 @@ service:
   health_port: 9071
 image:
   repository: 543777179833.dkr.ecr.eu-west-1.amazonaws.com/can-docker-auditlog-service
-  tag: 1.0.0.56
+  tag: 1.0.0.57
   pullPolicy: Always
 deployment:
   reloader: "true"
@@ -114,8 +114,8 @@ applicationProperties:
         auditLogTable: staging_audit_log
         auditLogTable.projectIdIndex: project_id_index
         jobsHistoryTable: staging_jobs_history
-        usageTable.name: staging_usage
-        lastUsageTable.name: staging_last_usage
+        usageTable: staging_usage
+        lastUsageTable: staging_last_usage
   ### other microservices ###
   can.service.project.serverUrl: https://staging.clevermaps.io:443
   ###################################
