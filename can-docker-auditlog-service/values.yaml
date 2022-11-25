@@ -56,34 +56,6 @@ applicationProperties:
   ### Application specific properties ###
   #######################################
   service.name: can-auditlog-service
-  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
-  ### Async AWS Step Functions ###
-  can.service.auditlog.states.logStepFunctionResultActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_log_step_function_result
-  can.service.auditlog.worker.maxWorkerPoolSize: 2
-  ### DynamoDB common lib configuration (active only with profile: aws-dynamodb) ###
-  can.service.dynamodb:
-    region: eu-west-1
-    # timeout in milliseconds for a single http request to complete
-    apiCallAttemptTimeout: 5000
-    # timeout in milliseconds for DynamoDbClient to complete the execution of an API call - a single API call that reads
-    # at most 1MB of data from DynamoDb (before applying filter condition) - may be multiple http requests (e.g. retries
-    # when apiCallAttemptTimeout for a single http request is exceeded)
-    apiCallTimeout: 10000
-    # limit in milliseconds for audit log service to complete querying data from DynamoDb - all API calls including
-    # subsequent API calls using lastEvaluatedKey from previous responses when 1MB data limit was hit
-    queryTimeLimit: 30000
-    # when caching table descriptions is turned on information about table key schema and indices needed for extracting
-    # last evaluated key is fetched only once per table name
-    cacheTableDescriptions: true
-  ### DynamoDB audit-log-service specific configuration
-  can.service.auditlog.dynamodb:
-    environment: staging
-    auditLogTable: staging_audit_log
-    auditLogTable.projectIdIndex: project_id_index
-    jobsHistoryTable: staging_jobs_history
-    usageTable: staging_usage
-    lastUsageTable: staging_last_usage
-  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### AWS ###
   can.service:
     aws:
