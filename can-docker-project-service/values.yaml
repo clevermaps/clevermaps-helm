@@ -96,18 +96,6 @@ applicationProperties:
   can.service.project.dwhClusters: ekwdfi
   can.service.project.defaultOrganizationId: defaultOrgId123
   can.service.project.preparedProjectPoolSize: 10
-  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
-  ### Async AWS Step Functions ###
-  can.service.states.machine.prepareProject.name: staging_prepare_project
-  can.service.states.machine.deleteProject.name: staging_delete_project
-  can.service.states.machine.updateDwhDatabase.name: staging_update_dwh_database
-  can.service.states.machine.updateMdDatabase.name: staging_update_md_database
-  can.service.project.states.changeProjectStatusActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_project_change_project_status
-  can.service.project.states.updateDbAllProjectsActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_update_db_all_projects
-  can.service.states.worker.maxWorkerPoolSize: 2
-  can.service.aws.region: eu-west-1
-  can.service.aws.accountId: "543777179833"
-  # TODO: remove when CAN-13200 is released and deployed on production (END)
   ### other microservices ###
   can.service.authn.serverUrl: https://staging.clevermaps.io
   ##############################
