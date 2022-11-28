@@ -86,21 +86,6 @@ applicationProperties:
   # name of fallback database used when EntityManager is initialised
   # database must exist, but it is not used for storing any data
   can.db.pool.fallbackDatabaseName: empty
-  # TODO: remove when CAN-13200 is released and deployed on production (BEGIN)
-  ### Async AWS Step Functions ###
-  can.service.md.states.switchTableActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_md_switch_dwh_table
-  can.service.md.states.recreateMdReferenceTableActivityArn: arn:aws:states:eu-west-1:543777179833:activity:staging_md_reference_recreate
-  can.service.states.machine.deleteDataset.name: staging_delete_dataset
-  can.service.states.worker.maxWorkerPoolSize: 2
-  can.service.aws.region: eu-west-1
-  can.service.aws.accountId: "543777179833"
-  # NOTE: following properties are relevant only when running in profile aws-step-functions-credentials (does not apply for staging/production deployment)
-  #can.service.states.machine.accessKey: ACCESS_KEY
-  #can.service.states.machine.secretKey: SECRET_KEY
-  #can.service.states.worker.accessKey: AWS_KEY
-  #can.service.states.worker.secretKey: AWS_SECRET_KEY
-  # TODO: remove when CAN-13200 is released and deployed on production (END)
-
   ### other microservices ###
   can.service.project.serverUrl: https://staging.clevermaps.io
   ##############################
