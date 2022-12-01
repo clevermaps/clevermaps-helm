@@ -1,4 +1,0 @@
-apiVersion: v2
-appVersion: 1.0.0.412
-name: can-docker-dwh-cache-service
-version: 0.0.1
